@@ -1,5 +1,5 @@
 --- # Start
-- name: Setup Linux # Name playbook
+- name: Update & Upgrade # Name playbook
   hosts: rpi # Group name in hosts file
   become: true # superuser privileges
   vars:
@@ -9,8 +9,9 @@
       - curl
       - htop
       - git
-      - net-tools
-
+      - python3-pip
+      - docker.io
+      - docker-compose
   tasks: # Begin Task
   - name: Update RPi
     apt:
@@ -27,3 +28,12 @@
     debug:
       msg: "Package {{ item }} was installed."
     loop: "{{ packages }}"
+  - name: Create the docker group
+    group:
+      name: docker
+      state: present
+  - name: Add pi user to docker group # usermod -aG docker pi
+    user:
+      name: pi
+      groups: docker
+      append: yes
