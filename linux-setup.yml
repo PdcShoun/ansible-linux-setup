@@ -1,29 +1,26 @@
 --- # Start
 - name: Setup Linux # Name playbook
-  hosts: rpi # Group name in hosts file
+  hosts: all_servers # Group name in hosts file
   become: true # superuser privileges
-  vars:
-    packages:
-      - vim
-      - wget
-      - curl
-      - htop
-      - git
-      - net-tools
 
   tasks: # Begin Task
-  - name: Update RPi
-    apt:
-      update_cache: yes
-  - name: Upgrade Rpi
-    apt:
-      upgrade: yes
-  - name: Install packages
-    apt:
-      name: "{{ item }}"
-      state: present
-    loop: "{{ packages }}"
-  - name: Print installation report
-    debug:
-      msg: "Package {{ item }} was installed."
-    loop: "{{ packages }}"
+    - name: Update
+      apt:
+        update_cache: yes
+    - name: Upgrade
+      apt:
+        upgrade: yes
+
+    - name: Check if reboot is required
+      stat:
+        path: /var/run/reboot-required
+      register: reboot_required
+
+    - name: Reboot after upgrade
+      reboot:
+        msg: "Reboot initiated by Ansible after upgrade"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 30
+      when: reboot_required.stat.exists
